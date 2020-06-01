@@ -1,0 +1,48 @@
+172.18.4.89			 			8G		k8s-master
+
+172.18.4.90			 			8G		k8s-worker: monitoring,skywalking-temp,logging-temp
+
+172.18.4.92			 			16G		k8s-worker: gateway,service,middleware
+172.18.4.94			 			16G		k8s-worker: gateway,service,middleware
+172.18.4.96			 			16G		k8s-worker: service
+
+172.18.4.93			 			16G		k8s-worker: logging-es
+
+
+kubectl get node --show-labels
+
+# 设置主机标签
+=========================
+kubectl label nodes 172.18.4.90 monitoring=monitoring --overwrite
+kubectl label nodes 172.18.4.90 skywalking-temp=skywalking-temp --overwrite
+kubectl label nodes 172.18.4.90 logging-temp=logging-temp --overwrite
+kubectl label nodes 172.18.4.90 gateway-temp=gateway-temp --overwrite
+
+----------------------------------------------------------------
+kubectl label nodes 172.18.4.92 gateway=gateway --overwrite
+kubectl label nodes 172.18.4.92 service=service --overwrite
+kubectl label nodes 172.18.4.92 middleware=middleware --overwrite
+
+kubectl label nodes 172.18.4.94 gateway=gateway --overwrite
+kubectl label nodes 172.18.4.94 service=service --overwrite
+kubectl label nodes 172.18.4.94 middleware=middleware --overwrite
+
+kubectl label nodes 172.18.4.96 service=service --overwrite
+----------------------------------------------------------------
+
+kubectl label nodes 172.18.4.93 logging-es=logging-es --overwrite
+
+
+# 编排文件中设置固定标签
+nodeSelector:
+  action: "monitoring"
+
+
+# 设置主机污点
+kubectl taint nodes 172.18.4.92 env=dev:NoExecute --overwrite --overwrite
+# 编排文件中需要添加排除污点配置
+tolerations:
+- key: "env"
+  operator: "Equal"
+  value: "dev"
+  effect: "NoExecute"

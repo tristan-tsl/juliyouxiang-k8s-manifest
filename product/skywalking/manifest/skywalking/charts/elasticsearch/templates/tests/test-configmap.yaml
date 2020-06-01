@@ -1,0 +1,17 @@
+---
+# Source: skywalking/charts/elasticsearch/templates/tests/test-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skywalking-elasticsearch-test
+  labels:
+    app: skywalking-elasticsearch
+    chart: "elasticsearch-1.32.0"
+    heritage: "Helm"
+    release: "skywalking"
+data:
+  run.sh: |-
+    @test "Test Access and Health" {
+      curl -D - http://skywalking-elasticsearch-client:9200
+      curl -D - http://skywalking-elasticsearch-client:9200/_cluster/health?wait_for_status=green
+    }

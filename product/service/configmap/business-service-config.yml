@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: business-service-config
+  namespace: service
+data:
+  CLOUD_EUREKA_DEFAULTZONE: "http://:@eureka.springcloud/eureka/,http://:@eureka2.springcloud/eureka/"
+  JASYPT_ENCRYPTOR_PASSWORD: ""

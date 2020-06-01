@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: business-service-config
+  namespace: middleend
+data:
+  JASYPT_ENCRYPTOR_PASSWORD: ""
+  CLOUD_CONFIG_URI: "http://springcloud-config.springcloud"

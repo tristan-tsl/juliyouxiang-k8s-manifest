@@ -1,0 +1,39 @@
+---
+# Source: skywalking/templates/ui-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skywalking-skywalking-ui
+  labels:
+    app: skywalking
+    chart: skywalking-1.0.0
+    component: "skywalking-ui"
+    heritage: Helm
+    release: skywalking
+  namespace: skywalking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skywalking
+      component: "skywalking-ui"
+      release: skywalking
+  template:
+    metadata:
+      labels:
+        app: skywalking
+        component: "skywalking-ui"
+        release: skywalking
+    spec:
+      nodeSelector:
+        skywalking-temp: "skywalking-temp"
+      containers:
+      - name: skywalking-ui
+        image: apache/skywalking-ui:6.5.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: page
+        env:
+        - name: SW_OAP_ADDRESS
+          value: skywalking-skywalking-oap.skywalking:12800

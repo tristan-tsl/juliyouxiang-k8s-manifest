@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: middleend
+  name: middle-end-data-spider
+  labels:
+    app: middle-end-data-spider
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: middle-end-data-spider
+      labels:
+        app: middle-end-data-spider
+    spec:
+      nodeSelector:
+        middleend: "middleend"
+      containers:
+        - name: middle-end-data-spider
+          image: registry-vpc.cn-shenzhen.aliyuncs.com/jlyx/middle-end-data-spider-master:3916_201912171513
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 45
+          env:
+            - name: JASYPT_ENCRYPTOR_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: JASYPT_ENCRYPTOR_PASSWORD
+            - name: CLOUD_CONFIG_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CLOUD_CONFIG_URI
+          envFrom:
+            - configMapRef:
+                name: business-service-config
+          volumeMounts:
+            - mountPath: /etc/localtime
+              name: localtime
+            - name: app-logs
+              mountPath: /logs
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:7.0.0
+          volumeMounts:
+            - name: app-logs
+              mountPath: /logs
+            - name: filebeat-config
+              mountPath: /usr/share/filebeat/filebeat.yml
+              readOnly: true
+              subPath: filebeat.yml
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: app-logs
+          emptyDir: {}
+        - name: filebeat-config
+          configMap:
+            name: filebeat-config
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+  selector:
+    matchLabels:
+      app: middle-end-data-spider
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: middle-end-data-spider
+  namespace: middleend
+spec:
+  selector:
+    app: middle-end-data-spider
+  ports:
+    - name: tcp
+      port: 80
+      targetPort: 8080

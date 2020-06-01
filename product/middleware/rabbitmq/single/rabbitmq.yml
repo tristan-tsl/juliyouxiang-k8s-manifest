@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: middleware
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: rabbitmq
+      labels:
+        app: rabbitmq
+    spec:
+      nodeSelector:
+        middleware: "middleware"
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: ""
+            - name: RABBITMQ_DEFAULT_PASS
+              value: ""
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: nfspvc
+              subPath: rabbitmq
+      restartPolicy: Always
+      volumes:
+        - name: nfspvc
+          persistentVolumeClaim:
+            claimName: nfs-pvc-middleware
+  selector:
+    matchLabels:
+      app: rabbitmq
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: middleware
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: tcp
+      port: 80
+      targetPort: 5672
+    - name: http
+      port: 15672
+      targetPort: 15672
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: rabbitmq-ingress-route
+  namespace: middleware
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`rabbitmq.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: rabbitmq
+          port: 15672

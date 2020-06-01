@@ -1,0 +1,19 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: secured
+  namespace: skywalking
+spec:
+  chain:
+    middlewares:
+      - name: auth-users
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: auth-users
+  namespace: skywalking
+spec:
+  basicAuth:
+    secret: basic-auth

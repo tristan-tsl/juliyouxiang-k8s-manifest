@@ -1,0 +1,15 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-ingress-route
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`grafana.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: grafana
+          port: 3000

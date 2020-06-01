@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wechat-auth
+  namespace: service
+  labels:
+    k8s-app: wechat-auth
+data:
+  MP_verify_5jVtWA0wKrgzOUZ3.txt: |-

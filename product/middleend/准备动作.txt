@@ -1,0 +1,11 @@
+kubectl label nodes 172.18.4.96 middleend=middleend --overwrite
+
+mkdir -p /mnt/product/middleend/grafana
+chmod 777 /mnt/product/middleend/grafana
+
+# 创建镜像拉取私钥
+kubectl -n middleend create secret docker-registry regcred \
+    --docker-server=registry-vpc.cn-shenzhen.aliyuncs.com \
+    --docker-username=dockerregistry@1254950669906700 \
+    --docker-password=dockerregistry2019 \
+    --docker-email=3301015948@qq.com

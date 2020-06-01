@@ -1,0 +1,24 @@
+---
+# Source: skywalking/templates/ui-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: skywalking
+    chart: skywalking-1.0.0
+    component: "skywalking-ui"
+    heritage: Helm
+    release: skywalking
+  name: skywalking-skywalking-ui
+  namespace: skywalking
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+
+  selector:
+    app: skywalking
+    component: "skywalking-ui"
+    release: skywalking

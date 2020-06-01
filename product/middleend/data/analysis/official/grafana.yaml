@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+  namespace: middleend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - image: grafana/grafana:6.5.1
+        name: grafana
+        ports:
+        - containerPort: 3000
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2000Mi
+          requests:
+            cpu: 1000m
+            memory: 1000Mi
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          name: grafana-storage
+          readOnly: false
+          subPath: grafana
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+        middleend: "middleend"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: nfs-pvc-middleend
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: middleend
+spec:
+  selector:
+    app: grafana
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana-ingress-route
+  namespace: middleend
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`grafana.middleend.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: grafana
+          port: 80

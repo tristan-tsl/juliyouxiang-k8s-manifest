@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: business-service-config
+  namespace: springcloud
+data:
+  EUREKA_USER_NAME: ""
+  EUREKA_USER_PASSWORD: ""
+  CLOUD_EUREKA_DEFAULTZONE1: "http://:@eureka.springcloud/eureka/"
+  CLOUD_EUREKA_DEFAULTZONE2: "http://:@eureka2.springcloud/eureka/"
+  CLOUD_EUREKA_DEFAULTZONE: "http://:@eureka.springcloud/eureka/,http://root:eureka2019@eureka2.springcloud/eureka/"
+  CONFIG_GIT_URI: "http://.com/config/java/product.git"
+  CONFIG_GIT_USERNAME: ""
+  CONFIG_GIT_PASSWORD: ""
+  JASYPT_ENCRYPTOR_PASSWORD: ""

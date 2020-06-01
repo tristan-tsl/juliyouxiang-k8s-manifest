@@ -1,0 +1,22 @@
+---
+# Source: skywalking/charts/elasticsearch/templates/master-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: elasticsearch
+    chart: elasticsearch-1.32.0
+    component: "master"
+    heritage: Helm
+    release: skywalking
+  name: skywalking-elasticsearch-discovery
+  namespace: skywalking
+spec:
+  type: NodePort
+  ports:
+    - port: 9300
+      targetPort: transport
+  selector:
+    app: elasticsearch
+    component: "master"
+    release: skywalking

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: dev
+  name: redis-slave
+spec:
+  serviceName: redis-slave
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-slave
+    spec:
+      tolerations:
+        - key: "env"
+          operator: "Equal"
+          value: "dev"
+          effect: "NoExecute"
+      nodeSelector:
+        env: "dev"
+      containers:
+        - name: redis-slave
+          image: registry.cn-hangzhou.aliyuncs.com/szss/redis:4.0.6
+          imagePullPolicy: Always
+          env:
+            - name: PASSWORD
+              value: "123456"
+          ports:
+            - containerPort: 6379
+              name: redis-slave
+          readinessProbe:
+            exec:
+              command: ['redis-cli','-a','123456', 'info', 'server']
+          volumeMounts:
+            - name: redis-slave-storage
+              mountPath: /data
+      volumes:
+        - name: redis-slave-storage
+          hostPath:
+            path: /data/tristan/cache/redis
+            type: DirectoryOrCreate
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - redis-slave
+                topologyKey: kubernetes.io/hostname
+  selector:
+    matchLabels:
+      app: redis-slave

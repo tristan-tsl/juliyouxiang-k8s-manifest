@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: springcloud
+  name: springcloud-config
+  labels:
+    app: springcloud-config
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: springcloud-config
+      labels:
+        app: springcloud-config
+    spec:
+      nodeSelector:
+        service: "service"
+      containers:
+        - name: springcloud-config
+          image: registry-vpc.cn-shenzhen.aliyuncs.com/jlyx/config-master:2918_201911282147
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            tcpSocket:
+              port: 9201
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          env:
+            - name: CLOUD_EUREKA_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CLOUD_EUREKA_DEFAULTZONE
+            - name: CONFIG_GIT_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CONFIG_GIT_URI
+            - name: CONFIG_GIT_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CONFIG_GIT_USERNAME
+            - name: CONFIG_GIT_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CONFIG_GIT_PASSWORD
+          envFrom:
+            - configMapRef:
+                name: business-service-config
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:7.0.0
+          volumeMounts:
+            - name: app-logs
+              mountPath: /logs
+            - name: filebeat-config
+              mountPath: /usr/share/filebeat/filebeat.yml
+              readOnly: true
+              subPath: filebeat.yml
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: app-logs
+          emptyDir: {}
+        - name: filebeat-config
+          configMap:
+            name: filebeat-config
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+  selector:
+    matchLabels:
+      app: springcloud-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springcloud-config
+  namespace: springcloud
+spec:
+  selector:
+    app: springcloud-config
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9201

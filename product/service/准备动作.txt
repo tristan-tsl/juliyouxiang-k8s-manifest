@@ -1,0 +1,10 @@
+# 创建镜像拉取私钥
+kubectl -n service create secret docker-registry regcred \
+    --docker-server=registry-vpc.cn-shenzhen.aliyuncs.com \
+    --docker-username=dockerregistry@1254950669906700 \
+    --docker-password=dockerregistry2019 \
+    --docker-email=3301015948@qq.com
+
+kubectl create secret tls admin-https-secret --cert 1_admin.juliyouxiang.com_bundle.crt --key 2_admin.juliyouxiang.com.key -n service
+
+kubectl create secret tls h5-https-secret --cert 1_public.h5.juliyouxiang.com_bundle.crt --key 2_public.h5.juliyouxiang.com.key -n service

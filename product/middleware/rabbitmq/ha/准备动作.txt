@@ -1,0 +1,4 @@
+rm -rf /mnt/product/middleware/rabbitmq-ha/*
+mount -t nfs -o vers=4,minorversion=0,noresvport 217734b352-gsl17.cn-shenzhen.nas.aliyuncs.com:/ /mnt
+mkdir -p /mnt/product/middleware/rabbitmq-ha
+chmod 777 /mnt/product/middleware/rabbitmq-ha

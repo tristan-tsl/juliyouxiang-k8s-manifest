@@ -1,0 +1,15 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: rabbitmq-ingress-route
+  namespace: middleware
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`rabbitmq.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: rabbitmq-service
+          port: 15672

@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: middleware
+  name: nfs-pv-middleware-redis
+  labels:
+    app: nfs
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadWriteMany
+  mountOptions:
+    - vers=3
+    - nolock,tcp,noresvport
+  nfs:
+    path: /product/middleware/redis
+    server: 217734b352-gsl17.cn-shenzhen.nas.aliyuncs.com

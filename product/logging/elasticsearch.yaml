@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: logging
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: elasticsearch
+      labels:
+        app: elasticsearch
+    spec:
+      nodeSelector:
+        logging-es: "logging-es"
+      containers:
+        - name: elasticsearch
+          image: elasticsearch:7.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9200
+            - containerPort: 9300
+          env:
+            - name: discovery.type
+              value: "single-node"
+            - name: ES_JAVA_OPTS
+              value: -Xms8g -Xmx8g
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: nfspvc
+              subPath: elasticsearch
+            - mountPath: /etc/localtime
+              name: localtime
+      restartPolicy: Always
+      volumes:
+        - name: nfspvc
+          persistentVolumeClaim:
+            claimName: nfs-pvc-logging
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+  selector:
+    matchLabels:
+      app: elasticsearch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: logging
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+    - name: http
+      port: 9200
+    - name: tcp
+      port: 9300
+  type: NodePort

@@ -1,0 +1,42 @@
+---
+# Source: skywalking/templates/es-init.job.yaml
+# https://docs.sentry.io/server/installation/docker/#running-migrations
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "skywalking-es-init"
+  labels:
+    app: skywalking
+    chart: skywalking-1.0.0
+    component: "skywalking-job"
+    heritage: Helm
+    release: skywalking
+  namespace: skywalking
+spec:
+  template:
+    metadata:
+      name: "skywalking-es-init"
+      labels:
+        app: skywalking
+        component: "skywalking-job"
+        release: skywalking
+    spec:
+      nodeSelector:
+        skywalking-temp: "skywalking-temp"
+      restartPolicy: Never
+      initContainers:
+      - name: wait-for-elasticsearch
+        image: busybox:1.30
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'for i in $(seq 1 60); do nc -z -w3 elasticsearch.skywalking 9200 && exit 0 || sleep 5; done; exit 1']
+      containers:
+      - name: skywalking-oap
+        image: "apache/skywalking-oap-server:6.5.0"
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: JAVA_OPTS
+          value: "-Xmx2g -Xms2g -Dmode=init"
+        - name: SW_STORAGE
+          value: elasticsearch
+        - name: SW_STORAGE_ES_CLUSTER_NODES
+          value: "elasticsearch.skywalking:9200"

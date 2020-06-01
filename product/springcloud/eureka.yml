@@ -1,0 +1,194 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka
+  namespace: springcloud
+  labels:
+    app: eureka
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: eureka
+      labels:
+        app: eureka
+    spec:
+      nodeSelector:
+        service: "service"
+      containers:
+        - name: eureka
+          image: registry-vpc.cn-shenzhen.aliyuncs.com/jlyx/eureka-master:2796_201911271648
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: EUREKA_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: EUREKA_USER_NAME
+            - name: EUREKA_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: EUREKA_USER_PASSWORD
+            - name: CLOUD_EUREKA_DEFAULTZONE_OTHER
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CLOUD_EUREKA_DEFAULTZONE2
+          envFrom:
+            - configMapRef:
+                name: business-service-config
+          volumeMounts:
+            - mountPath: /etc/localtime
+              name: localtime
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:7.0.0
+          volumeMounts:
+            - name: app-logs
+              mountPath: /logs
+            - name: filebeat-config
+              mountPath: /usr/share/filebeat/filebeat.yml
+              readOnly: true
+              subPath: filebeat.yml
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: app-logs
+          emptyDir: {}
+        - name: filebeat-config
+          configMap:
+            name: filebeat-config
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+  selector:
+    matchLabels:
+      app: eureka
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka2
+  namespace: springcloud
+  labels:
+    app: eureka2
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: eureka2
+      labels:
+        app: eureka2
+    spec:
+      nodeSelector:
+        service: "service"
+      containers:
+        - name: cloudeureka
+          image: registry-vpc.cn-shenzhen.aliyuncs.com/jlyx/eureka-master:2796_201911271648
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: EUREKA_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: EUREKA_USER_NAME
+            - name: EUREKA_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: EUREKA_USER_PASSWORD
+            - name: CLOUD_EUREKA_DEFAULTZONE_OTHER
+              valueFrom:
+                configMapKeyRef:
+                  name: business-service-config
+                  key: CLOUD_EUREKA_DEFAULTZONE1
+          envFrom:
+            - configMapRef:
+                name: business-service-config
+          volumeMounts:
+            - mountPath: /etc/localtime
+              name: localtime
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:7.0.0
+          volumeMounts:
+            - name: app-logs
+              mountPath: /logs
+            - name: filebeat-config
+              mountPath: /usr/share/filebeat/filebeat.yml
+              readOnly: true
+              subPath: filebeat.yml
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: app-logs
+          emptyDir: {}
+        - name: filebeat-config
+          configMap:
+            name: filebeat-config
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+  selector:
+    matchLabels:
+      app: eureka2
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka
+  namespace: springcloud
+spec:
+  selector:
+    app: eureka
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka2
+  namespace: springcloud
+spec:
+  selector:
+    app: eureka2
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: eureka-ingress-route
+  namespace: springcloud
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`eureka.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: eureka
+          port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: eureka2-ingress-route
+  namespace: springcloud
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`eureka2.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: eureka2
+          port: 80

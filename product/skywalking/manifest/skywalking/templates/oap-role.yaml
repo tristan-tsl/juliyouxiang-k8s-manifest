@@ -1,0 +1,16 @@
+---
+# Source: skywalking/templates/oap-role.yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: skywalking
+  labels:
+    app: skywalking
+    chart: "skywalking-1.0.0"
+    release: "skywalking"
+    heritage: "Helm"
+  namespace: skywalking
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]

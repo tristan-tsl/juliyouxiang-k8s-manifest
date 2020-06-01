@@ -1,0 +1,104 @@
+---
+# Source: skywalking/charts/elasticsearch/templates/client-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: elasticsearch
+    chart: elasticsearch-1.32.0
+    component: "client"
+    heritage: Helm
+    release: skywalking
+  name: skywalking-elasticsearch-client
+  namespace: skywalking
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+      component: "client"
+      release: skywalking
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        component: "client"
+        release: skywalking
+      annotations:
+        checksum/config: 9a14f0d311ab4255fda91e04f4b4498f326528f349224ed08700436ce453c456
+    spec:
+      nodeSelector:
+        skywalking-es: "skywalking-es"
+      serviceAccountName: skywalking-elasticsearch-client
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: "elasticsearch"
+                  release: "skywalking"
+                  component: "client"
+      initContainers:
+      # see https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
+      # and https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-configuration-memory.html#mlockall
+      - name: "sysctl"
+        image: "busybox:latest"
+        imagePullPolicy: "IfNotPresent"
+        resources:
+            {}
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch
+        env:
+        - name: NODE_DATA
+          value: "false"
+        - name: NODE_MASTER
+          value: "false"
+        - name: DISCOVERY_SERVICE
+          value: skywalking-elasticsearch-discovery:9300
+        - name: PROCESSORS
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+        - name: ES_JAVA_OPTS
+          value: "-Djava.net.preferIPv4Stack=true -Xms512m -Xmx512m  "
+        - name: MINIMUM_MASTER_NODES
+          value: "2"
+        resources:
+            limits:
+              cpu: "1"
+            requests:
+              cpu: 25m
+              memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health?local=true
+            port: 9200
+          initialDelaySeconds: 90
+        image: "docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.2"
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 9200
+          name: http
+        - containerPort: 9300
+          name: transport
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          name: config
+          subPath: elasticsearch.yml
+      volumes:
+      - name: config
+        configMap:
+          name: skywalking-elasticsearch

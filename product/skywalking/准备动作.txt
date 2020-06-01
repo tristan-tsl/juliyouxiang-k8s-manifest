@@ -1,0 +1,28 @@
+helm fetch --repo https://kubernetes-charts.storage.googleapis.com --untar --untardir product/skywalking/charts/skywalking/charts --version ~1.32.0 elasticsearch
+
+helm template --namespace skywalking --name-template skywalking --values product/skywalking/charts/skywalking/values.yaml --output-dir product/skywalking/manifest/ product/skywalking/charts/skywalking/
+
+
+sudo mount -t nfs -o vers=4,minorversion=0,noresvport 217734b352-gsl17.cn-shenzhen.nas.aliyuncs.com:/ /mnt
+
+rm -rf /mnt/product/skywalking/elasticsearch/*
+mkdir -p /mnt/product/skywalking/elasticsearch
+chmod 777 /mnt/product/skywalking/elasticsearch
+
+
+  namespace: skywalking
+
+        persistentVolumeClaim:
+          claimName: nfs-pvc-skywalking
+
+          subPath: elasticsearch
+
+      nodeSelector:
+        skywalking-es: "skywalking-es"
+
+
+# 生成登录secret
+yum -y install httpd
+htpasswd -c ./auth jlyx
+kubectl create secret generic basic-auth --from-file auth --namespace=skywalking
+

@@ -1,0 +1,26 @@
+---
+# Source: skywalking/charts/elasticsearch/templates/client-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: elasticsearch
+    chart: elasticsearch-1.32.0
+    component: "client"
+    heritage: Helm
+    release: skywalking
+  name: skywalking-elasticsearch-client
+  namespace: skywalking
+spec:
+  ports:
+    - name: http
+      port: 9200
+      targetPort: http
+    - name: tcp
+      port: 9300
+      targetPort: 9300
+  selector:
+    app: elasticsearch
+    component: "client"
+    release: skywalking
+  type: NodePort

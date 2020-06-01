@@ -1,0 +1,17 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: skywalking-ui-ingress-route
+  namespace: skywalking
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`skywalking.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: skywalking-skywalking-ui
+          port: 80
+      middlewares:
+        - name: secured

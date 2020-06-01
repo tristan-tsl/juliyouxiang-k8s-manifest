@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: springcloud
+  labels:
+    k8s-app: filebeat
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: log
+      paths:
+        - "/logs/*"
+      multiline.pattern: '^[[:space:]]+(at|\.{3})\b|^Caused by:'
+      multiline.negate: false
+      multiline.match: after
+    output.elasticsearch:
+      hosts: ["http://elasticsearch.logging:9200"]
+      index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+      username: ""
+      password: ""
+    setup.ilm.enabled: false
+    setup.template.name: "filebeat-%{[agent.version]}"
+    setup.template.pattern: "filebeat-%{[agent.version]}-*"

@@ -1,0 +1,66 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: middleware
+  name: xxljob
+  labels:
+    app: xxljob
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: xxljob
+      labels:
+        app: xxljob
+    spec:
+      nodeSelector:
+        middleware: "middleware"
+      containers:
+        - name: xxljob
+          image: xuxueli/xxl-job-admin:2.1.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PARAMS
+              value: "--spring.datasource.url=jdbc:mysql://:3306/xxl_job?Unicode=true&characterEncoding=UTF-8 --spring.datasource.username= --spring.datasource.password="
+          volumeMounts:
+            - mountPath: /data/applogs
+              name: nfspvc
+              subPath: xxljob
+      restartPolicy: Always
+      volumes:
+        - name: nfspvc
+          persistentVolumeClaim:
+            claimName: nfs-pvc-middleware
+  selector:
+    matchLabels:
+      app: xxljob
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xxljob
+  namespace: middleware
+spec:
+  selector:
+    app: xxljob
+  ports:
+    - name: tcp
+      port: 80
+      targetPort: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: xxljob-ingress-route
+  namespace: middleware
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`xxljob.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: xxljob
+          port: 80

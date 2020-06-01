@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init_redis
+  namespace: middleware
+spec:
+  template:
+    spec:
+      containers:
+        - name: date
+          image: tanshilindocker/redis-trib
+          command: ["python", "/init_redis_cluster.py"]
+          volumeMounts:
+            - name: init-redis-cluster-config
+              mountPath: /init_redis_cluster.py
+              readOnly: true
+              subPath: init_redis_cluster.py
+      restartPolicy: Never
+      volumes:
+        - name: init-redis-cluster-config
+          configMap:
+            name: init-redis-cluster-config

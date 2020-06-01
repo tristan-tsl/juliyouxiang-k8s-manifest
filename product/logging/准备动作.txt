@@ -1,0 +1,12 @@
+sudo mount -t nfs -o vers=4,minorversion=0,noresvport 217734b352-gsl17.cn-shenzhen.nas.aliyuncs.com:/ /mnt
+
+mkdir -p /mnt/product/logging/elasticsearch
+chmod 777 /mnt/product/logging/elasticsearch
+
+mkdir -p /mnt/product/logging/kibana
+chmod 777 /mnt/product/logging/kibana
+
+# 生成登录secret
+yum -y install httpd
+htpasswd -c ./auth jlyx
+kubectl create secret generic basic-auth --from-file auth --namespace=logging

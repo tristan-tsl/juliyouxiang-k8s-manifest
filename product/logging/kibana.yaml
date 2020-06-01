@@ -1,0 +1,76 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: logging
+  name: kibana
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: kibana
+      labels:
+        app: kibana
+    spec:
+      nodeSelector:
+        logging-temp: "logging-temp"
+      containers:
+        - name: kibana
+          image: kibana:7.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_NAME
+              value: "kibana.juliyouxiang.com"
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch.logging:9200"
+            - name: XPACK_MONITORING_ENABLED
+              value: "false"
+          volumeMounts:
+            - mountPath: /usr/share/kibana/data
+              name: nfspvc
+              subPath: kibana
+            - mountPath: /etc/localtime
+              name: localtime
+      restartPolicy: Always
+      volumes:
+        - name: nfspvc
+          persistentVolumeClaim:
+            claimName: nfs-pvc-logging
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+  selector:
+    matchLabels:
+      app: kibana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: logging
+spec:
+  selector:
+    app: kibana
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5601
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kibana-ingress-route
+  namespace: logging
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`kibana.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: kibana
+          port: 80
+      middlewares:
+        - name: secured

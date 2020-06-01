@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: delindex-config
+  namespace: logging
+data:
+  delindex.sh: |-
+    echo http://elasticsearch.logging:9200/filebeat-7.0.0-$(date -d '10 days ago' +%Y%m%d)*
+    curl -XDELETE http://elasticsearch.logging:9200/filebeat-7.0.0-$(date -d '10 days ago' +%Y%m%d)*
+
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: es-delete-job
+  namespace: logging
+spec:
+  schedule: "0 0 1/1 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: es-delete-job
+            image: tutum/curl
+            command:
+            - /bin/sh
+            - delindex.sh
+            volumeMounts:
+            - name: delindex-config
+              mountPath: delindex.sh
+              readOnly: true
+              subPath: delindex.sh
+          volumes:
+          - name: delindex-config
+            configMap:
+              name: delindex-config
+          restartPolicy: OnFailure

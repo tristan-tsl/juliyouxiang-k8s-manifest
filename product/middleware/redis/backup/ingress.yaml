@@ -1,0 +1,14 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: redis-slave-ingress-route
+  namespace: dev
+spec:
+  entryPoints:
+    - tcp
+  routes:
+    - match: HostSNI(`redis.admin.dev.juliyouxiang.com`)
+      services:
+        - name: redis-slave
+          port: 6379

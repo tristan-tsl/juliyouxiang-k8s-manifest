@@ -1,0 +1,22 @@
+kubectl apply -f dev/service/middleware/redis/redis-master-pod.yaml
+
+kubectl apply -f dev/service/middleware/redis/redis-sentinel-svc.yaml
+kubectl apply -f dev/service/middleware/redis/redis-sentinel-deploy.yaml
+
+
+kubectl apply -f dev/service/middleware/redis/redis-slave-svc.yaml
+kubectl apply -f dev/service/middleware/redis/redis-slave-statefulset.yaml
+
+kubectl delete -f dev/service/middleware/redis/redis-master-pod.yaml
+
+
+kubectl apply -f dev/service/middleware/redis/ingress.yaml
+
+
+
+
+kubectl delete -f dev/service/middleware/redis/redis-master-pod.yaml
+kubectl delete -f dev/service/middleware/redis/redis-sentinel-svc.yaml
+kubectl delete -f dev/service/middleware/redis/redis-sentinel-deploy.yaml
+kubectl delete -f dev/service/middleware/redis/redis-slave-statefulset.yaml
+kubectl delete -f dev/service/middleware/redis/redis-slave-svc.yaml

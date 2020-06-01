@@ -1,0 +1,74 @@
+---
+# Source: skywalking/templates/oap-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: skywalking
+    chart: skywalking-1.0.0
+    component: "skywalking-oap"
+    heritage: Helm
+    release: skywalking
+  name: skywalking-skywalking-oap
+  namespace: skywalking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skywalking
+      component: "skywalking-oap"
+      release: skywalking
+  template:
+    metadata:
+      labels:
+        app: skywalking
+        component: "skywalking-oap"
+        release: skywalking
+    spec:
+      nodeSelector:
+        skywalking-temp: "skywalking-temp"
+      serviceAccountName: skywalking-skywalking-oap
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: "skywalking"
+                  release: "skywalking"
+                  component: "skywalking-oap"
+      initContainers:
+      - name: wait-for-elasticsearch
+        image: busybox:1.30
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'for i in $(seq 1 60); do nc -z -w3 elasticsearch.skywalking 9200 && exit 0 || sleep 5; done; exit 1']
+      containers:
+      - name: skywalking-oap
+        image: "apache/skywalking-oap-server:6.5.0"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 11800
+          name: grpc
+        - containerPort: 12800
+          name: rest
+        env:
+        - name: JAVA_OPTS
+          value: "-Xmx2g -Xms2g -Dmode=no-init"
+        - name: SW_CLUSTER
+          value: kubernetes
+        - name: SW_CLUSTER_K8S_NAMESPACE
+          value: "skywalking"
+        - name: SW_CLUSTER_K8S_LABEL
+          value: "app=skywalking,release=skywalking,component=skywalking-oap"
+        - name: SKYWALKING_COLLECTOR_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: SW_STORAGE
+          value: elasticsearch
+        - name: SW_STORAGE_ES_CLUSTER_NODES
+          value: "elasticsearch.skywalking:9200"
+        - name: SW_STORAGE_ES_INDEX_SHARDS_NUMBER
+          value: "1"

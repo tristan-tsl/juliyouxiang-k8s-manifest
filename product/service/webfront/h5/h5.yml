@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: service
+  name: ui-h5
+  labels:
+    app: ui-h5
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: ui-h5
+      labels:
+        app: ui-h5
+    spec:
+      nodeSelector:
+        service: "service"
+      containers:
+        - name: ui-h5
+          image: registry-vpc.cn-shenzhen.aliyuncs.com/jlyx/h5-master:3789_201912140950
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          volumeMounts:
+            - mountPath: /etc/localtime
+              name: localtime
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+  selector:
+    matchLabels:
+      app: ui-h5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-h5
+  namespace: service
+spec:
+  selector:
+    app: ui-h5
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ui-h5-ingress-route
+  namespace: service
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`public.h5.juliyouxiang.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: ui-h5
+          port: 80
+  tls:
+    secretName: h5-https-secret
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ui-h5-ingress-route
+  namespace: service
+spec:
+  compress: {}

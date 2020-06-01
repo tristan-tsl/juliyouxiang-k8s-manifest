@@ -1,0 +1,23 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: auto-schedule-spider
+  namespace: middleend
+spec:
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  schedule: "0 0/1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          nodeSelector:
+            middleend: "middleend"
+          containers:
+            - name: auto-schedule-spider
+              image: centos:centos7
+              args:
+                - /bin/sh
+                - -c
+                - curl http://middle-end-data-spider.middleend/spider/net_trigger
+          restartPolicy: OnFailure
